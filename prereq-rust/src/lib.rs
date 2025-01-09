@@ -268,17 +268,23 @@ pub fn complete_prerequisite(github_username: &str) {
     // Create a Solana devnet connection
     let rpc_client = RpcClient::new(RPC_URL);
     
+    println!("1. Creating RPC connection to {}", RPC_URL);
+    
     // Let's define our accounts
     let signer = read_keypair_file("turbin3-wallet.json")
         .expect("Couldn't find turbin3-wallet.json file");
-        
-    println!("Completing prerequisite for GitHub user: {}", github_username);
+    
+    println!("2. Loaded signer: {}", signer.pubkey());
+    println!("3. Github username to submit: {}", github_username);
     
     // Create program instance
     let program = WbaPrereq::new(rpc_client, signer);
     
     // Convert string to bytes
     let github_bytes = github_username.as_bytes().to_vec();
+    println!("4. Github bytes length: {}", github_bytes.len());
+    println!("5. Github bytes: {:?}", github_bytes.clone());
+    println!("6. Instruction data: {:?}", [vec![0], (github_bytes.len() as u32).to_le_bytes().to_vec(), github_bytes.clone()].concat());
     
     // Call the complete instruction
     match program.complete(github_bytes) {
@@ -288,6 +294,17 @@ pub fn complete_prerequisite(github_username: &str) {
                 signature
             );
         },
-        Err(e) => println!("Failed to complete prerequisite: {}", e)
+        Err(e) => {
+            // Get detailed logs
+            if let Some(logs) = e.to_string().split("[").nth(1) {
+                if let Some(logs) = logs.split("]").next() {
+                    println!("Program Logs:");
+                    for log in logs.split(",") {
+                        println!("  {}", log.trim());
+                    }
+                }
+            }
+            println!("\nError details: {}", e);
+        }
     }
 }
