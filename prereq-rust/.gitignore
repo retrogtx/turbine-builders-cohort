@@ -1,0 +1,6 @@
+target
+dev-wallet.json
+.env*
+todo
+todo2
+*wallet.json
